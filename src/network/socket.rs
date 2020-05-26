@@ -1,3 +1,6 @@
+extern crate rand;
+
+use rand::RngCore;
 use std::io::Read;
 use std::io::Write;
 
@@ -100,6 +103,7 @@ impl Receiver {
 }
 
 pub struct Socket {
+    id: u64,
     stream: std::net::TcpStream,
     tx: Transmitter,
     rx: Receiver,
@@ -107,11 +111,18 @@ pub struct Socket {
 
 impl Socket {
     pub fn from(stream: std::net::TcpStream) -> Socket {
+        let mut rng = rand::prelude::thread_rng();
+
         Socket {
+            id: rng.next_u64(),
             stream,
             tx: Transmitter::new(),
             rx: Receiver::new(),
         }
+    }
+
+    pub fn id(&self) -> u64 {
+        self.id
     }
 
     pub fn stream(&mut self) -> &mut std::net::TcpStream {
