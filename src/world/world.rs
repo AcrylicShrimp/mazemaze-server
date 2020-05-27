@@ -63,9 +63,12 @@ impl World {
         &self.map
     }
 
-    pub fn add_player(&mut self, id: u64) -> &super::object::Object {
+    pub fn players(&self) -> &Vec<(u64, super::object::Object)> {
+        &self.players
+    }
+
+    pub fn add_player(&mut self, id: u64) {
         self.players.push((id, super::object::Object::new(1, 1)));
-        &self.players.last().unwrap().1
     }
 
     pub fn remove_player(&mut self, id: u64) {
