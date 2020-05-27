@@ -3,20 +3,27 @@ extern crate byteorder;
 use super::packet;
 use byteorder::ReadBytesExt;
 
+pub enum Context {
+    DirectionReceive,
+}
+
 pub struct Handler {
     status: std::collections::HashMap<u64, Option<u16>>,
+    context: std::collections::HashMap<u64, Option<Context>>,
 }
 
 impl Handler {
     pub fn new() -> Handler {
         Handler {
             status: std::collections::HashMap::new(),
+            context: std::collections::HashMap::new(),
         }
     }
 
     pub fn add_socket(&mut self, socket: &mut super::socket::Socket) {
         socket.receive(2);
         self.status.insert(socket.id(), None);
+        self.context.insert(socket.id(), None);
     }
 
     pub fn remove_socket(
@@ -26,6 +33,7 @@ impl Handler {
         world: &mut super::super::world::world::World,
     ) {
         self.status.remove(&sockets[index].id());
+        self.context.remove(&sockets[index].id());
         world.remove_player(sockets[index].id());
 
         let packet = packet::player_exit(sockets[index].id());
@@ -36,6 +44,8 @@ impl Handler {
             }
 
             sockets[socket_index].send(packet.clone());
+
+            break;
         }
     }
 
@@ -87,8 +97,6 @@ impl Handler {
         sockets: &mut Vec<super::socket::Socket>,
         world: &mut super::super::world::world::World,
     ) {
-        println!("index={}, status={}", index, status);
-
         match status {
             1 => {
                 world.add_player(sockets[index].id());
@@ -108,14 +116,72 @@ impl Handler {
                     }
 
                     sockets[socket_index].send(player_income_packet.clone());
+
+                    break;
                 }
 
                 sockets[index].receive(2);
                 self.status.insert(sockets[index].id(), None);
+                self.context.insert(sockets[index].id(), None);
+            }
+            2 => {
+                if self.context[&sockets[index].id()].is_none() {
+                    sockets[index].receive(1);
+                    sockets[index].update();
+                    self.context
+                        .insert(sockets[index].id(), Some(Context::DirectionReceive));
+                }
+
+                match self.context[&sockets[index].id()] {
+                    Some(..) => match sockets[index].retrieve() {
+                        Some(received) => {
+                            for player in world.players_mut().iter_mut() {
+                                if player.id() != sockets[index].id() {
+                                    continue;
+                                }
+
+                                match received[0] {
+                                    0 => {
+                                        player.object_mut().y -= 1;
+                                    }
+                                    1 => {
+                                        player.object_mut().y += 1;
+                                    }
+                                    2 => {
+                                        player.object_mut().x -= 1;
+                                    }
+                                    3 => {
+                                        player.object_mut().x += 1;
+                                    }
+                                    _ => {}
+                                }
+
+                                break;
+                            }
+
+                            let packet = packet::player_move(sockets[index].id(), received[0]);
+
+                            for socket in sockets.iter_mut() {
+                                socket.send(packet.clone());
+                            }
+
+                            sockets[index].receive(2);
+                            self.status.insert(sockets[index].id(), None);
+                            self.context.insert(sockets[index].id(), None);
+                        }
+                        None => {}
+                    },
+                    None => {
+                        sockets[index].receive(1);
+                        self.context
+                            .insert(sockets[index].id(), Some(Context::DirectionReceive));
+                    }
+                }
             }
             _ => {
                 sockets[index].receive(2);
                 self.status.insert(sockets[index].id(), None);
+                self.context.insert(sockets[index].id(), None);
             }
         }
     }
