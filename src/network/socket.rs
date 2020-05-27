@@ -142,14 +142,6 @@ impl Socket {
     }
 
     pub fn update(&mut self) -> bool {
-        if !self.tx.update(&mut self.stream) {
-            return false;
-        }
-
-        if !self.rx.update(&mut self.stream) {
-            return false;
-        }
-
-        true
+        self.tx.update(&mut self.stream) && self.rx.update(&mut self.stream)
     }
 }
