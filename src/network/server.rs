@@ -28,8 +28,6 @@ pub fn start(
                 }
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(1u64));
-
             {
                 let mut sockets = sockets.lock().unwrap();
                 let mut world = world.lock().unwrap();
@@ -37,8 +35,6 @@ pub fn start(
 
                 handler.handle_sockets(&mut sockets, &mut world);
             }
-
-            std::thread::sleep(std::time::Duration::from_millis(1u64));
         });
         s.spawn(|_| {
             let listener = std::net::TcpListener::bind(format!("{}:{}", host, port)).unwrap();
@@ -48,7 +44,7 @@ pub fn start(
             for stream in listener.incoming() {
                 match stream {
                     Ok(stream) => {
-                        if stream.set_nodelay(true).is_err() {
+                        if stream.set_nodelay(false).is_err() {
                             continue;
                         }
 
