@@ -1,6 +1,7 @@
 extern crate byteorder;
 
-use byteorder::{ReadBytesExt, WriteBytesExt};
+use super::packet;
+use byteorder::ReadBytesExt;
 
 pub struct Handler {
     status: std::collections::HashMap<u64, Option<u16>>,
@@ -18,8 +19,24 @@ impl Handler {
         self.status.insert(socket.id(), None);
     }
 
-    pub fn remove_socket(&mut self, socket: &super::socket::Socket) {
-        self.status.remove(&socket.id());
+    pub fn remove_socket(
+        &mut self,
+        index: usize,
+        sockets: &mut Vec<super::socket::Socket>,
+        world: &mut super::super::world::world::World,
+    ) {
+        self.status.remove(&sockets[index].id());
+        world.remove_player(sockets[index].id());
+
+        let packet = packet::player_exit(sockets[index].id());
+
+        for socket_index in 0..sockets.len() {
+            if socket_index == index {
+                continue;
+            }
+
+            sockets[socket_index].send(packet.clone());
+        }
     }
 
     pub fn handle_sockets(
@@ -60,31 +77,38 @@ impl Handler {
             status_code = status.unwrap();
         }
 
-        self.handle_packet(status_code, index, world, sockets);
+        self.handle_packet(status_code, index, sockets, world);
     }
 
     fn handle_packet(
         &mut self,
         status: u16,
         index: usize,
-        world: &mut super::super::world::world::World,
         sockets: &mut Vec<super::socket::Socket>,
+        world: &mut super::super::world::world::World,
     ) {
         println!("index={}, status={}", index, status);
 
         match status {
             1 => {
-                let mut packet = vec![];
+                world.add_player(sockets[index].id());
 
-                packet
-                    .write_u32::<byteorder::LittleEndian>(world.map().width())
-                    .unwrap();
-                packet
-                    .write_u32::<byteorder::LittleEndian>(world.map().height())
-                    .unwrap();
-                packet.extend(world.map().data());
+                sockets[index].send(packet::inform_world(
+                    world.map().width(),
+                    world.map().height(),
+                    world.map().data(),
+                    world.players(),
+                ));
 
-                sockets[index].send(packet);
+                let player_income_packet = packet::player_income(world.players().last().unwrap());
+
+                for socket_index in 0..sockets.len() {
+                    if socket_index == index {
+                        continue;
+                    }
+
+                    sockets[socket_index].send(player_income_packet.clone());
+                }
 
                 sockets[index].receive(2);
                 self.status.insert(sockets[index].id(), None);
