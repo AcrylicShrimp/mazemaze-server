@@ -29,7 +29,7 @@ pub fn inform_world(
 			.write_u64::<byteorder::LittleEndian>(player.id())
 			.unwrap();
 
-		let mut glyph = vec![4; 0];
+		let mut glyph = vec![0; 4];
 		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 		packet.extend(glyph);
@@ -50,7 +50,7 @@ pub fn inform_world(
 			.write_u64::<byteorder::LittleEndian>(player.id())
 			.unwrap();
 
-		let mut glyph = vec![4; 0];
+		let mut glyph = vec![0; 4];
 		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 		packet.extend(glyph);
@@ -78,7 +78,7 @@ pub fn player_income(player: &super::super::world::player::Player) -> Vec<u8> {
 		.write_u64::<byteorder::LittleEndian>(player.id())
 		.unwrap();
 
-	let mut glyph = vec![4; 0];
+	let mut glyph = vec![0; 4];
 	let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 	packet.extend(glyph);
