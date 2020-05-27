@@ -41,7 +41,7 @@ pub fn inform_world(
 			.write_i32::<byteorder::LittleEndian>(player.object().x)
 			.unwrap();
 		packet
-			.write_i32::<byteorder::LittleEndian>(player.object().x)
+			.write_i32::<byteorder::LittleEndian>(player.object().y)
 			.unwrap();
 	}
 
