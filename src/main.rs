@@ -6,7 +6,7 @@ fn main() {
         std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
         std::sync::Arc::new(std::sync::Mutex::new(world::world::World::new())),
         std::sync::Arc::new(std::sync::Mutex::new(network::handler::Handler::new())),
-        "127.0.0.1",
+        "0.0.0.0",
         19980,
     );
 }
