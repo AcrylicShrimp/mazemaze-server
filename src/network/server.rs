@@ -22,8 +22,7 @@ pub fn start(
                             .or_else(|_| std::io::Result::Ok(()))
                             .unwrap();
 
-                        world.remove_player(sockets[index].id());
-                        handler.remove_socket(&sockets[index]);
+                        handler.remove_socket(index, &mut sockets, &mut world);
                         sockets.remove(index);
                     }
                 }
