@@ -105,3 +105,15 @@ pub fn player_exit(player: u64) -> Vec<u8> {
 
 	packet
 }
+
+pub fn player_move(player: u64, direction: u8) -> Vec<u8> {
+	let mut packet = Vec::with_capacity(2 + 8 + 1);
+
+	packet.write_u16::<byteorder::LittleEndian>(4).unwrap();
+
+	packet.write_u64::<byteorder::LittleEndian>(player).unwrap();
+
+	packet.push(direction);
+
+	packet
+}
