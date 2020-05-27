@@ -1,6 +1,6 @@
 pub struct World {
     map: super::map::Map,
-    players: Vec<(u64, super::object::Object)>,
+    players: Vec<super::player::Player>,
 }
 
 impl World {
@@ -63,20 +63,16 @@ impl World {
         &self.map
     }
 
-    pub fn players(&self) -> &Vec<(u64, super::object::Object)> {
+    pub fn players(&self) -> &Vec<super::player::Player> {
         &self.players
     }
 
     pub fn add_player(&mut self, id: u64) {
-        self.players.push((id, super::object::Object::new(1, 1)));
+        self.players.push(super::player::Player::new(id, 1, 1));
     }
 
     pub fn remove_player(&mut self, id: u64) {
-        match self
-            .players
-            .iter()
-            .position(|(player_id, _)| *player_id == id)
-        {
+        match self.players.iter().position(|player| id == player.id()) {
             Some(index) => {
                 self.players.remove(index);
             }
