@@ -67,6 +67,10 @@ impl World {
         &self.players
     }
 
+    pub fn players_mut(&mut self) -> &mut Vec<super::player::Player> {
+        &mut self.players
+    }
+
     pub fn add_player(&mut self, id: u64) {
         self.players.push(super::player::Player::new(id, 1, 1));
     }
