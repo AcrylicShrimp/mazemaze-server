@@ -28,13 +28,16 @@ pub fn start(
                 }
             }
 
+            std::thread::sleep(std::time::Duration::from_millis(1u64));
+
             {
                 let mut sockets = sockets.lock().unwrap();
                 let mut world = world.lock().unwrap();
                 let mut handler = handler.lock().unwrap();
-
                 handler.handle_sockets(&mut sockets, &mut world);
             }
+
+            std::thread::sleep(std::time::Duration::from_millis(1u64));
         });
         s.spawn(|_| {
             let listener = std::net::TcpListener::bind(format!("{}:{}", host, port)).unwrap();
