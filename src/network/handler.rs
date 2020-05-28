@@ -45,7 +45,6 @@ impl Handler {
 
             sockets[socket_index].send(packet.clone());
 
-            break;
         }
     }
 
@@ -117,7 +116,6 @@ impl Handler {
 
                     sockets[socket_index].send(player_income_packet.clone());
 
-                    break;
                 }
 
                 sockets[index].receive(2);
