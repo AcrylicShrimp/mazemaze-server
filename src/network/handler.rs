@@ -34,7 +34,10 @@ impl Handler {
     ) {
         self.status.remove(&sockets[index].id());
         self.context.remove(&sockets[index].id());
-        world.remove_player(sockets[index].id());
+
+        if !world.remove_player(sockets[index].id()) {
+            return;
+        }
 
         let packet = packet::player_exit(sockets[index].id());
 

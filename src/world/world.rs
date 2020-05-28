@@ -75,12 +75,13 @@ impl World {
         self.players.push(super::player::Player::new(id, 1, 1));
     }
 
-    pub fn remove_player(&mut self, id: u64) {
+    pub fn remove_player(&mut self, id: u64) -> bool {
         match self.players.iter().position(|player| id == player.id()) {
             Some(index) => {
                 self.players.remove(index);
+                true
             }
-            None => {}
-        };
+            None => false,
+        }
     }
 }
