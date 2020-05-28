@@ -34,6 +34,7 @@ pub fn start(
                 let mut sockets = sockets.lock().unwrap();
                 let mut world = world.lock().unwrap();
                 let mut handler = handler.lock().unwrap();
+
                 handler.handle_sockets(&mut sockets, &mut world);
             }
 
@@ -55,10 +56,13 @@ pub fn start(
                             continue;
                         }
 
+                        let mut sockets = sockets.lock().unwrap();
+                        let mut handler = handler.lock().unwrap();
+
                         let mut socket = super::socket::Socket::from(stream);
 
-                        handler.lock().unwrap().add_socket(&mut socket);
-                        sockets.lock().unwrap().push(socket);
+                        handler.add_socket(&mut socket);
+                        sockets.push(socket);
 
                         println!("client income...");
                     }
