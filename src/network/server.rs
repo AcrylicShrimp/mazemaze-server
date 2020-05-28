@@ -16,6 +16,9 @@ pub fn start(
 
                 for index in (0..sockets.len()).rev() {
                     if !sockets[index].update() {
+                        println!("current players: {}", sockets.len());
+                        println!("player exit: {}, {}", index, sockets[index].id());
+
                         sockets[index]
                             .stream()
                             .shutdown(std::net::Shutdown::Both)
