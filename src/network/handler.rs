@@ -47,7 +47,6 @@ impl Handler {
             }
 
             sockets[socket_index].send(packet.clone());
-
         }
     }
 
@@ -118,7 +117,6 @@ impl Handler {
                     }
 
                     sockets[socket_index].send(player_income_packet.clone());
-
                 }
 
                 sockets[index].receive(2);
@@ -136,34 +134,74 @@ impl Handler {
                 match self.context[&sockets[index].id()] {
                     Some(..) => match sockets[index].retrieve() {
                         Some(received) => {
-                            for player in world.players_mut().iter_mut() {
+                            let mut allow_movement = false;
+
+                            for player in world.players().iter() {
                                 if player.id() != sockets[index].id() {
                                     continue;
                                 }
 
-                                match received[0] {
+                                allow_movement = match received[0] {
                                     0 => {
-                                        player.object_mut().y -= 1;
+                                        world.map().get_block(
+                                            player.object().x as u32,
+                                            (player.object().y - 1) as u32,
+                                        ) == 0
                                     }
                                     1 => {
-                                        player.object_mut().y += 1;
+                                        world.map().get_block(
+                                            player.object().x as u32,
+                                            (player.object().y + 1) as u32,
+                                        ) == 0
                                     }
                                     2 => {
-                                        player.object_mut().x -= 1;
+                                        world.map().get_block(
+                                            (player.object().x - 1) as u32,
+                                            player.object().y as u32,
+                                        ) == 0
                                     }
                                     3 => {
-                                        player.object_mut().x += 1;
+                                        world.map().get_block(
+                                            (player.object().x + 1) as u32,
+                                            player.object().y as u32,
+                                        ) == 0
                                     }
-                                    _ => {}
-                                }
+                                    _ => false,
+                                };
 
                                 break;
                             }
 
-                            let packet = packet::player_move(sockets[index].id(), received[0]);
+                            if allow_movement {
+                                for player in world.players_mut().iter_mut() {
+                                    if player.id() != sockets[index].id() {
+                                        continue;
+                                    }
 
-                            for socket in sockets.iter_mut() {
-                                socket.send(packet.clone());
+                                    match received[0] {
+                                        0 => {
+                                            player.object_mut().y -= 1;
+                                        }
+                                        1 => {
+                                            player.object_mut().y += 1;
+                                        }
+                                        2 => {
+                                            player.object_mut().x -= 1;
+                                        }
+                                        3 => {
+                                            player.object_mut().x += 1;
+                                        }
+                                        _ => {}
+                                    }
+
+                                    break;
+                                }
+
+                                let packet = packet::player_move(sockets[index].id(), received[0]);
+
+                                for socket in sockets.iter_mut() {
+                                    socket.send(packet.clone());
+                                }
                             }
 
                             sockets[index].receive(2);
