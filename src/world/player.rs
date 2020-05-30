@@ -4,7 +4,6 @@ use byteorder::WriteBytesExt;
 
 pub struct Player {
 	id: u64,
-	glyph: char,
 	color: (u8, u8, u8),
 	object: object::Object,
 }
@@ -17,7 +16,6 @@ impl Player {
 
 		Player {
 			id,
-			glyph: '@',
 			color: (
 				std::cmp::min(bytes[0] as u32 + 64, 255) as u8,
 				std::cmp::min(bytes[1] as u32 + 64, 255) as u8,
@@ -29,10 +27,6 @@ impl Player {
 
 	pub fn id(&self) -> u64 {
 		self.id
-	}
-
-	pub fn glyph(&self) -> char {
-		self.glyph
 	}
 
 	pub fn color(&self) -> (u8, u8, u8) {

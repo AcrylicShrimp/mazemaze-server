@@ -8,9 +8,8 @@ pub fn inform_world(
 	data: &Vec<u8>,
 	players: &Vec<super::super::world::player::Player>,
 ) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(
-		2 + 4 + 4 + data.len() + (8 + 4 + 1 + 1 + 1 + 1 + 4 + 4) * players.len(),
-	);
+	let mut packet =
+		Vec::with_capacity(2 + 4 + 4 + data.len() + (8 + 1 + 1 + 1 + 4 + 4) * players.len());
 
 	packet.write_u16::<byteorder::LittleEndian>(1).unwrap();
 
@@ -29,11 +28,6 @@ pub fn inform_world(
 			.write_u64::<byteorder::LittleEndian>(player.id())
 			.unwrap();
 
-		let mut glyph = vec![0; 4];
-		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
-
-		packet.extend(glyph);
-		packet.push(encoded_length);
 		packet.push(player.color().0);
 		packet.push(player.color().1);
 		packet.push(player.color().2);
@@ -50,11 +44,6 @@ pub fn inform_world(
 			.write_u64::<byteorder::LittleEndian>(player.id())
 			.unwrap();
 
-		let mut glyph = vec![0; 4];
-		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
-
-		packet.extend(glyph);
-		packet.push(encoded_length);
 		packet.push(player.color().0);
 		packet.push(player.color().1);
 		packet.push(player.color().2);
@@ -70,7 +59,7 @@ pub fn inform_world(
 }
 
 pub fn player_income(player: &super::super::world::player::Player) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(2 + 8 + 4 + 1 + 1 + 1 + 1 + 4 + 4);
+	let mut packet = Vec::with_capacity(2 + 8 + 1 + 1 + 1 + 4 + 4);
 
 	packet.write_u16::<byteorder::LittleEndian>(2).unwrap();
 
@@ -78,11 +67,6 @@ pub fn player_income(player: &super::super::world::player::Player) -> Vec<u8> {
 		.write_u64::<byteorder::LittleEndian>(player.id())
 		.unwrap();
 
-	let mut glyph = vec![0; 4];
-	let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
-
-	packet.extend(glyph);
-	packet.push(encoded_length);
 	packet.push(player.color().0);
 	packet.push(player.color().1);
 	packet.push(player.color().2);
