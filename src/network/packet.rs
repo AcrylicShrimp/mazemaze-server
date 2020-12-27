@@ -1,119 +1,97 @@
-extern crate byteorder;
-
-use byteorder::WriteBytesExt;
+use bytes::{BufMut, Bytes, BytesMut};
 
 pub fn inform_world(
 	width: u32,
 	height: u32,
 	data: &Vec<u8>,
 	players: &Vec<super::super::world::player::Player>,
-) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(
+) -> Bytes {
+	let mut packet = BytesMut::with_capacity(
 		2 + 4 + 4 + data.len() + (8 + 4 + 1 + 1 + 1 + 1 + 4 + 4) * players.len(),
 	);
 
-	packet.write_u16::<byteorder::LittleEndian>(1).unwrap();
+	packet.put_u16_le(1);
 
-	packet.write_u32::<byteorder::LittleEndian>(width).unwrap();
-	packet.write_u32::<byteorder::LittleEndian>(height).unwrap();
+	packet.put_u32_le(width);
+	packet.put_u32_le(height);
 	packet.extend(data);
 
-	packet
-		.write_u32::<byteorder::LittleEndian>(players.len() as u32)
-		.unwrap();
+	packet.put_u32_le(players.len() as u32);
 
 	{
 		let player = players.last().unwrap();
 
-		packet
-			.write_u64::<byteorder::LittleEndian>(player.id())
-			.unwrap();
+		packet.put_u64_le(player.id());
 
 		let mut glyph = vec![0; 4];
 		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 		packet.extend(glyph);
-		packet.push(encoded_length);
-		packet.push(player.color().0);
-		packet.push(player.color().1);
-		packet.push(player.color().2);
-		packet
-			.write_i32::<byteorder::LittleEndian>(player.object().x)
-			.unwrap();
-		packet
-			.write_i32::<byteorder::LittleEndian>(player.object().y)
-			.unwrap();
+		packet.put_u8(encoded_length);
+		packet.put_u8(player.color().0);
+		packet.put_u8(player.color().1);
+		packet.put_u8(player.color().2);
+		packet.put_i32_le(player.object().x);
+		packet.put_i32_le(player.object().y);
 	}
 
 	for player in players.iter().take(players.len() - 1) {
-		packet
-			.write_u64::<byteorder::LittleEndian>(player.id())
-			.unwrap();
+		packet.put_u64_le(player.id());
 
 		let mut glyph = vec![0; 4];
 		let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 		packet.extend(glyph);
-		packet.push(encoded_length);
-		packet.push(player.color().0);
-		packet.push(player.color().1);
-		packet.push(player.color().2);
-		packet
-			.write_i32::<byteorder::LittleEndian>(player.object().x)
-			.unwrap();
-		packet
-			.write_i32::<byteorder::LittleEndian>(player.object().y)
-			.unwrap();
+		packet.put_u8(encoded_length);
+		packet.put_u8(player.color().0);
+		packet.put_u8(player.color().1);
+		packet.put_u8(player.color().2);
+		packet.put_i32_le(player.object().x);
+		packet.put_i32_le(player.object().y);
 	}
 
-	packet
+	packet.freeze()
 }
 
-pub fn player_income(player: &super::super::world::player::Player) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(2 + 8 + 4 + 1 + 1 + 1 + 1 + 4 + 4);
+pub fn player_income(player: &super::super::world::player::Player) -> Bytes {
+	let mut packet = BytesMut::with_capacity(2 + 8 + 4 + 1 + 1 + 1 + 1 + 4 + 4);
 
-	packet.write_u16::<byteorder::LittleEndian>(2).unwrap();
+	packet.put_u16_le(2);
 
-	packet
-		.write_u64::<byteorder::LittleEndian>(player.id())
-		.unwrap();
+	packet.put_u64_le(player.id());
 
 	let mut glyph = vec![0; 4];
 	let encoded_length = player.glyph().encode_utf8(&mut glyph).len() as u8;
 
 	packet.extend(glyph);
-	packet.push(encoded_length);
-	packet.push(player.color().0);
-	packet.push(player.color().1);
-	packet.push(player.color().2);
-	packet
-		.write_i32::<byteorder::LittleEndian>(player.object().x)
-		.unwrap();
-	packet
-		.write_i32::<byteorder::LittleEndian>(player.object().y)
-		.unwrap();
+	packet.put_u8(encoded_length);
+	packet.put_u8(player.color().0);
+	packet.put_u8(player.color().1);
+	packet.put_u8(player.color().2);
+	packet.put_i32_le(player.object().x);
+	packet.put_i32_le(player.object().y);
 
-	packet
+	packet.freeze()
 }
 
-pub fn player_exit(player: u64) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(2 + 8);
+pub fn player_exit(player: u64) -> Bytes {
+	let mut packet = BytesMut::with_capacity(2 + 8);
 
-	packet.write_u16::<byteorder::LittleEndian>(3).unwrap();
+	packet.put_u16_le(3);
 
-	packet.write_u64::<byteorder::LittleEndian>(player).unwrap();
+	packet.put_u64_le(player);
 
-	packet
+	packet.freeze()
 }
 
-pub fn player_move(player: u64, direction: u8) -> Vec<u8> {
-	let mut packet = Vec::with_capacity(2 + 8 + 1);
+pub fn player_move(player: u64, direction: u8) -> Bytes {
+	let mut packet = BytesMut::with_capacity(2 + 8 + 1);
 
-	packet.write_u16::<byteorder::LittleEndian>(4).unwrap();
+	packet.put_u16_le(4);
 
-	packet.write_u64::<byteorder::LittleEndian>(player).unwrap();
+	packet.put_u64_le(player);
 
-	packet.push(direction);
+	packet.put_u8(direction);
 
-	packet
+	packet.freeze()
 }

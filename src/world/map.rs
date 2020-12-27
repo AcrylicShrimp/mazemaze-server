@@ -1,7 +1,9 @@
+// use parking_lot::Mutex;
+
 pub struct Map {
-    data: Vec<u8>,
     width: u32,
     height: u32,
+    data: Vec<u8>,
 }
 
 impl Map {
@@ -25,7 +27,9 @@ impl Map {
         &self.data
     }
 
-    pub fn get_block(&self, x: u32, y: u32) -> u8 {
+    pub fn block(&self, x: u32, y: u32) -> u8 {
         self.data[(x + y * self.width) as usize]
     }
+
+    // TODO: Add various utility method to reduce locking/unlocking.
 }
