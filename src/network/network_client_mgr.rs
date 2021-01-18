@@ -7,6 +7,7 @@ use std::net::Shutdown;
 use std::sync::Arc;
 use tokio::join;
 use tokio::net::TcpStream;
+use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio::sync::oneshot;
 
@@ -103,51 +104,63 @@ impl NetworkClientManager {
 		true
 	}
 
-	pub fn send_packet(&'static self, index: usize, packet: Bytes) {
-		if self.network_client_channel_vec[index]
+	pub fn send_packet(&self, index: usize, packet: Bytes) -> Result<(), SendError<Bytes>> {
+		self.network_client_channel_vec[index]
 			.lock()
 			.as_ref()
 			.unwrap()
 			.send(packet)
-			.is_err()
-		{
-			tokio::spawn(async move {
-				self.remove_client(index).await;
-			});
-		}
 	}
 
-	pub fn broadcast_packet(&'static self, packet: Bytes) {
-		for index in 0..self.network_client_channel_vec.len() {
-			let result = match *self.network_client_channel_vec[index].lock() {
-				Some(network_client_channel) => network_client_channel.send(packet),
-				None => continue,
-			};
+	pub fn broadcast_packet(&self, packet: Bytes) -> Result<(), Vec<SendError<Bytes>>> {
+		let mut errors = Vec::new();
 
-			if result.is_err() {
-				tokio::spawn(async move {
-					self.remove_client(index).await;
-				});
+		for index in 0..self.network_client_channel_vec.len() {
+			match match &*self.network_client_channel_vec[index].lock() {
+				Some(network_client_channel) => network_client_channel.send(packet.clone()),
+				None => continue,
+			} {
+				Ok(..) => {}
+				Err(error) => {
+					errors.push(error);
+				}
 			}
 		}
+
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
 	}
 
-	pub fn broadcast_packet_except(&'static self, except_index: usize, packet: Bytes) {
+	pub fn broadcast_packet_except(
+		&self,
+		except_index: usize,
+		packet: Bytes,
+	) -> Result<(), Vec<SendError<Bytes>>> {
+		let mut errors = Vec::new();
+
 		for index in 0..self.network_client_channel_vec.len() {
 			if index == except_index {
 				continue;
 			}
 
-			let result = match *self.network_client_channel_vec[index].lock() {
-				Some(network_client_channel) => network_client_channel.send(packet),
+			match match &*self.network_client_channel_vec[index].lock() {
+				Some(network_client_channel) => network_client_channel.send(packet.clone()),
 				None => continue,
-			};
-
-			if result.is_err() {
-				tokio::spawn(async move {
-					self.remove_client(index).await;
-				});
+			} {
+				Ok(..) => {}
+				Err(error) => {
+					errors.push(error);
+				}
 			}
+		}
+
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
 		}
 	}
 }
