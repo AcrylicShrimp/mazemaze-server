@@ -1,6 +1,6 @@
 [package]
-name = "mazemaze-server"
-version = "0.1.0"
+name = "net"
+version = "0.0.0"
 authors = ["AcrylicShrimp <led789zxpp@naver.com>"]
 edition = "2018"
 
@@ -8,11 +8,6 @@ edition = "2018"
 
 [dependencies]
 async-trait = { version = "0.1" }
-byteorder = { version = "1" }
 bytes = { version = "1" }
-net = { path = "src/net" }
-ordered-float = { version = "1.0" }
-rand = { version = "0.7"}
-rand_distr = { version = "0.2.2"}
 parking_lot = { version = "0.11" }
 tokio = { version = "1", features = ["full"] }

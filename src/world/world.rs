@@ -78,7 +78,7 @@ impl World {
     pub fn remove_player(&mut self, id: u64) -> bool {
         match self.players.iter().position(|player| id == player.id()) {
             Some(index) => {
-                self.players.remove(index);
+                self.players.swap_remove(index);
                 true
             }
             None => false,
