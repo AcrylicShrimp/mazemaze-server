@@ -1,41 +1,57 @@
-use super::client::{Client, ClientId};
+use crate::Client;
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tokio::net::TcpStream;
+use tokio::sync::mpsc::UnboundedSender as MpscSender;
 
 pub struct ClientManager {
-    clients: Mutex<Vec<Arc<Mutex<Client>>>>,
+    clients: Mutex<Vec<Arc<Client>>>,
 }
 
 impl ClientManager {
-    pub fn new() -> ClientManager {
-        ClientManager {
+    pub fn new() -> Self {
+        Self {
             clients: Mutex::new(Vec::new()),
         }
     }
 
-    pub fn add(&mut self, stream: TcpStream) -> Arc<Mutex<Client>> {
-        let client = Client::from_stream(stream);
+    pub fn add_client(
+        &self,
+        stream: TcpStream,
+        termination_signal_sender: MpscSender<usize>,
+    ) -> Arc<Client> {
+        let client = Client::new(stream, termination_signal_sender);
         self.clients.lock().push(client.clone());
         client
     }
 
-    pub fn remove(&mut self, id: ClientId) {
+    pub fn remove_client(&self, id: usize) -> bool {
         let mut clients = self.clients.lock();
-        let clients_len = clients.len();
+        let index = match clients.iter().position(|client| client.id() == id) {
+            Some(index) => index,
+            None => return false,
+        };
+        clients.swap_remove(index);
+        true
+    }
 
-        for index in 0..clients_len {
-            if clients[index].lock().id() != id {
-                continue;
-            }
+    pub fn for_each_client<F>(&self, mut f: F)
+    where
+        F: FnMut(&Arc<Client>),
+    {
+        let clients = self.clients.lock();
+        for client in clients.iter() {
+            f(client);
+        }
+    }
 
-            let tmp = clients[index].clone();
-            clients[index] = clients[clients_len - 1].clone();
-            clients[clients_len - 1] = tmp;
-
-            clients.pop();
-
-            break;
+    pub fn for_each_client_mut<F>(&self, mut f: F)
+    where
+        F: FnMut(&mut Arc<Client>),
+    {
+        let mut clients = self.clients.lock();
+        for client in clients.iter_mut() {
+            f(client);
         }
     }
 }

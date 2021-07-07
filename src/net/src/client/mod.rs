@@ -1,2 +1,5 @@
-pub mod client;
-pub mod client_manager;
+mod client;
+mod client_manager;
+
+pub use client::*;
+pub use client_manager::*;
